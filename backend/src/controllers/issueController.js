@@ -12,18 +12,42 @@ const raiseIssue = async (req, res) => {
       match: matchId,
       description,
     });
-    res.status(201).json(issue);
+
+    // Return the fully populated issue
+    const populated = await Issue.findById(issue._id)
+      .populate("raisedBy", "name email role")
+      .populate({
+        path: "match",
+        populate: [
+          { path: "teamA", select: "name" },
+          { path: "teamB", select: "name" },
+          { path: "adjudicators", select: "name" },
+        ],
+      });
+
+    res.status(201).json(populated);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// @desc    Get all issues
+// @desc    Get all issues (with full match context)
 // @route   GET /api/issues
 // @access  Private/OC
 const getIssues = async (req, res) => {
   try {
-    const issues = await Issue.find({}).populate("raisedBy", "name email").populate("match");
+    const issues = await Issue.find({})
+      .populate("raisedBy", "name email role")
+      .populate("resolvedBy", "name")
+      .populate({
+        path: "match",
+        populate: [
+          { path: "teamA", select: "name" },
+          { path: "teamB", select: "name" },
+          { path: "adjudicators", select: "name" },
+        ],
+      })
+      .sort({ createdAt: -1 });
     res.json(issues);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -44,11 +68,25 @@ const resolveIssue = async (req, res) => {
     }
 
     issue.status = "resolved";
-    issue.resolution = resolution;
+    issue.resolution = resolution || "Resolved by OC";
     issue.resolvedBy = req.user._id;
 
     await issue.save();
-    res.json(issue);
+
+    // Return the fully populated issue
+    const populated = await Issue.findById(issue._id)
+      .populate("raisedBy", "name email role")
+      .populate("resolvedBy", "name")
+      .populate({
+        path: "match",
+        populate: [
+          { path: "teamA", select: "name" },
+          { path: "teamB", select: "name" },
+          { path: "adjudicators", select: "name" },
+        ],
+      });
+
+    res.json(populated);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

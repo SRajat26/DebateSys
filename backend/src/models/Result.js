@@ -40,13 +40,17 @@ const resultSchema = new mongoose.Schema(
     // Teams rate adjudicators
     adjudicatorRatings: [
       {
+        adjudicator: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
         team: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "User",
         },
         rating: {
           type: Number,
-          min: 1,
+          min: 0,
           max: 10,
         },
       },

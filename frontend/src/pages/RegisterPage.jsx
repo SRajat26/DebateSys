@@ -37,7 +37,7 @@ const RegisterPage = () => {
     <div className="flex justify-center items-center py-10">
       <div className="card max-w-lg w-full">
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-slate-800 mb-2">Create an account</h2>
+          <h2 className="text-3xl font-bold text-navy mb-2">Create an account</h2>
           <p className="text-slate-500">Join DebateSys to manage or participate in tournaments</p>
         </div>
 
@@ -138,7 +138,7 @@ const RegisterPage = () => {
 
         <div className="mt-8 text-center text-sm text-slate-600">
           Already have an account?{' '}
-          <Link to="/login" className="font-semibold text-primary hover:text-blue-700 transition-colors">
+          <Link to="/login" className="font-semibold text-primary hover:text-blue transition-colors">
             Log in instead
           </Link>
         </div>

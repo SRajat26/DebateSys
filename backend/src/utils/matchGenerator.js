@@ -87,22 +87,43 @@ const generateMatches = async (competition) => {
   }
 
   // Distribute Adjudicators
+  // Calculate average ratings for adjudicators to sort them
+  const adjScores = adjudicators.map(a => ({ id: a.toString(), totalRating: 0, count: 0, avg: 0 }));
+  
+  if (nextRound > 1) {
+    const pastResults = await Result.find({ competition: competition._id });
+    pastResults.forEach(r => {
+      r.adjudicatorRatings?.forEach(ar => {
+        if (!ar.adjudicator || ar.rating === undefined || ar.rating === null) return;
+        const stat = adjScores.find(s => s.id === ar.adjudicator.toString());
+        if (stat) {
+          stat.totalRating += ar.rating;
+          stat.count += 1;
+        }
+      });
+    });
+    adjScores.forEach(stat => {
+      if (stat.count > 0) stat.avg = stat.totalRating / stat.count;
+    });
+  }
+
+  // Sort by average rating DESC
+  adjScores.sort((a, b) => b.avg - a.avg);
+  const sortedAdjudicators = adjScores.map(s => adjudicators.find(a => a.toString() === s.id));
+
   const matchAdjudicators = pairs.map(() => []);
   const reqPerMatch = competition.adjudicatorsPerMatch;
   let currentAdjIndex = 0;
   
   // Guarantee 1 for each
   for (let i = 0; i < pairs.length; i++) {
-    matchAdjudicators[i].push(adjudicators[currentAdjIndex++]);
+    matchAdjudicators[i].push(sortedAdjudicators[currentAdjIndex++]);
   }
   
   // Distribute remaining based on priority (top matches first)
   let pairIndex = 0;
-  while (currentAdjIndex < adjudicators.length) {
-    // If giving more adjudicators, ensure we don't exceed what we want or just distribute them
-    // The requirement: "give priority to the top teams and give fewer to the lower teams"
-    // So we loop over top matches repeatedly until we run out of adjudicators
-    matchAdjudicators[pairIndex].push(adjudicators[currentAdjIndex++]);
+  while (currentAdjIndex < sortedAdjudicators.length) {
+    matchAdjudicators[pairIndex].push(sortedAdjudicators[currentAdjIndex++]);
     pairIndex++;
     if (pairIndex >= pairs.length) {
       pairIndex = 0; // wrap around

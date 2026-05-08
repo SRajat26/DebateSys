@@ -9,7 +9,9 @@ const AdjudicatorDashboard = () => {
   const [activeCompId, setActiveCompId] = useState(null);
   const [matches, setMatches] = useState([]);
   const [leaderboard, setLeaderboard] = useState([]);
+  const [adjLeaderboard, setAdjLeaderboard] = useState([]);
   const [activeTab, setActiveTab] = useState('myMatch');
+  const [lbTab, setLbTab] = useState('teams');
 
   // Score form state
   const [scoreForm, setScoreForm] = useState({
@@ -59,15 +61,16 @@ const AdjudicatorDashboard = () => {
     setActiveTab('myMatch');
     await refreshData(compId);
   };
-
   const refreshData = async (compId) => {
     try {
-      const [matchRes, lbRes] = await Promise.all([
+      const [matchRes, lbRes, adjLbRes] = await Promise.all([
         api.get(`/competitions/${compId}/matches`),
         api.get(`/results/leaderboard/${compId}`),
+        api.get(`/results/adjudicator-leaderboard/${compId}`),
       ]);
       setMatches(matchRes.data);
       setLeaderboard(lbRes.data);
+      setAdjLeaderboard(adjLbRes.data);
     } catch (err) {
       console.error(err);
     }
@@ -76,11 +79,16 @@ const AdjudicatorDashboard = () => {
   const handleSubmitScore = async (e) => {
     e.preventDefault();
     if (!scoreForm.matchId) return;
+    const aScore = Number(scoreForm.teamAScore);
+    const bScore = Number(scoreForm.teamBScore);
+    if (aScore < 67 || aScore > 81 || bScore < 67 || bScore > 81) {
+      return alert("Scores must be between 67 and 81");
+    }
     setSubmitting(true);
     try {
       await api.post(`/matches/${scoreForm.matchId}/result`, {
-        teamAScore: Number(scoreForm.teamAScore),
-        teamBScore: Number(scoreForm.teamBScore),
+        teamAScore: aScore,
+        teamBScore: bScore,
         winningTeam: scoreForm.winningTeam || null,
         feedback: scoreForm.feedback,
       });
@@ -124,7 +132,7 @@ const AdjudicatorDashboard = () => {
   if (!activeCompId) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-slate-800">Adjudicator Dashboard</h1>
+        <h1 className="text-2xl font-bold text-navy">Adjudicator Dashboard</h1>
 
         <div className="card">
           <h2 className="text-xl font-bold mb-4">Available Tournaments</h2>
@@ -137,7 +145,7 @@ const AdjudicatorDashboard = () => {
 
                 return (
                   <div key={c._id} className="border border-slate-200 rounded-lg p-5 bg-white shadow-sm hover:shadow-md transition-shadow">
-                    <h3 className="text-lg font-bold text-slate-800 mb-1">{c.name}</h3>
+                    <h3 className="text-lg font-bold text-navy mb-1">{c.name}</h3>
                     <div className="text-sm text-slate-500 mb-4 space-y-1">
                       <p>Status: <span className="uppercase font-medium text-slate-700">{c.status}</span></p>
                       <p>Round: <span className="font-medium text-slate-700">{c.currentRound} / {c.totalRounds}</span></p>
@@ -176,12 +184,12 @@ const AdjudicatorDashboard = () => {
   // Competition detail view
   return (
     <div className="space-y-6">
-      <button onClick={() => { setActiveCompId(null); setMatches([]); setLeaderboard([]); }} className="flex items-center text-sm text-slate-500 hover:text-primary transition-colors font-medium">
+      <button onClick={() => { setActiveCompId(null); setMatches([]); setLeaderboard([]); setAdjLeaderboard([]); }} className="flex items-center text-sm text-slate-500 hover:text-primary transition-colors font-medium">
         ← Back to Tournaments
       </button>
 
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-slate-800">{activeComp?.name}</h1>
+        <h1 className="text-2xl font-bold text-navy">{activeComp?.name}</h1>
         <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5 border border-green-200">
            <CheckCircle className="w-3.5 h-3.5" /> Checked In
         </span>
@@ -213,12 +221,12 @@ const AdjudicatorDashboard = () => {
               <h3 className="text-sm font-bold text-purple-600 uppercase tracking-wider mb-3">Your Assignment — Round {currentRound}</h3>
               <div className="flex flex-col md:flex-row items-center justify-around gap-6 py-4">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-slate-800">{currentMatch.teamA?.name || 'TBD'}</p>
+                  <p className="text-2xl font-bold text-navy">{currentMatch.teamA?.name || 'TBD'}</p>
                   <p className="text-xs text-slate-500 uppercase mt-1">Team A</p>
                 </div>
                 <span className="text-2xl font-bold text-slate-300">VS</span>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-slate-800">{currentMatch.teamB?.name || 'TBD'}</p>
+                  <p className="text-2xl font-bold text-navy">{currentMatch.teamB?.name || 'TBD'}</p>
                   <p className="text-xs text-slate-500 uppercase mt-1">Team B</p>
                 </div>
               </div>
@@ -235,15 +243,17 @@ const AdjudicatorDashboard = () => {
               {/* Score Submission Form */}
               {currentMatch.status !== 'completed' && (
                 <form onSubmit={handleSubmitScore} className="mt-6 border-t border-slate-100 pt-6">
-                  <h4 className="text-md font-bold text-slate-800 mb-4 flex items-center gap-2">
+                  <h4 className="text-md font-bold text-navy mb-4 flex items-center gap-2">
                     <Send className="w-4 h-4 text-primary" /> Submit Result
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium mb-1 text-slate-700">{currentMatch.teamA?.name || 'Team A'} Score</label>
+                      <label className="block text-sm font-medium mb-1 text-slate-700">{currentMatch.teamA?.name || 'Team A'} Score <span className="text-xs text-slate-400">(67-81)</span></label>
                       <input
                         type="number"
-                        min="0"
+                        min="67"
+                        max="81"
+                        placeholder="67-81"
                         className="input-field"
                         value={scoreForm.matchId === currentMatch._id ? scoreForm.teamAScore : ''}
                         onFocus={() => setScoreForm(prev => ({ ...prev, matchId: currentMatch._id }))}
@@ -252,10 +262,12 @@ const AdjudicatorDashboard = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1 text-slate-700">{currentMatch.teamB?.name || 'Team B'} Score</label>
+                      <label className="block text-sm font-medium mb-1 text-slate-700">{currentMatch.teamB?.name || 'Team B'} Score <span className="text-xs text-slate-400">(67-81)</span></label>
                       <input
                         type="number"
-                        min="0"
+                        min="67"
+                        max="81"
+                        placeholder="67-81"
                         className="input-field"
                         value={scoreForm.matchId === currentMatch._id ? scoreForm.teamBScore : ''}
                         onFocus={() => setScoreForm(prev => ({ ...prev, matchId: currentMatch._id }))}
@@ -316,14 +328,14 @@ const AdjudicatorDashboard = () => {
 
           {pastMatches.length > 0 && (
             <div className="card">
-              <h3 className="text-lg font-bold text-slate-800 mb-4">Past Assignments</h3>
+              <h3 className="text-lg font-bold text-navy mb-4">Past Assignments</h3>
               <div className="space-y-3">
                 {pastMatches.sort((a, b) => b.roundNumber - a.roundNumber).map((m) => (
                   <div key={m._id} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200">
                     <div className="flex items-center gap-3">
                       <span className="bg-slate-200 text-slate-600 text-xs font-bold px-2 py-1 rounded">R{m.roundNumber}</span>
                       <div>
-                        <p className="font-semibold text-slate-800">{m.teamA?.name || 'TBD'} vs {m.teamB?.name || 'TBD'}</p>
+                        <p className="font-semibold text-navy">{m.teamA?.name || 'TBD'} vs {m.teamB?.name || 'TBD'}</p>
                         <p className="text-xs text-slate-500">Venue: {m.venue}</p>
                       </div>
                     </div>
@@ -348,7 +360,7 @@ const AdjudicatorDashboard = () => {
           ) : (
             roundNumbers.map((rn) => (
               <div key={rn} className="card">
-                <h3 className="text-lg font-bold text-slate-800 mb-4">
+                <h3 className="text-lg font-bold text-navy mb-4">
                   <span className="bg-primary text-white text-xs font-bold px-2.5 py-1 rounded mr-3">R{rn}</span>
                   Round {rn}
                 </h3>
@@ -368,10 +380,10 @@ const AdjudicatorDashboard = () => {
                       {matchesByRound[rn].map((m) => {
                         const isMyMatch = m.adjudicators?.some(a => a._id === user._id);
                         return (
-                          <tr key={m._id} className={`border-b border-slate-100 transition-colors ${isMyMatch ? 'bg-purple-50/60' : 'hover:bg-slate-50'}`}>
-                            <td className="py-3 px-4 font-semibold text-slate-800">{m.teamA?.name || 'TBD'}</td>
+                          <tr key={m._id} className={`border-b border-slate-100 transition-colors ${isMyMatch ? 'bg-blue-50' : 'hover:bg-slate-50'}`}>
+                            <td className="py-3 px-4 font-semibold text-navy">{m.teamA?.name || 'TBD'}</td>
                             <td className="py-3 px-4 text-center text-slate-400 font-bold">{m.isBye ? 'BYE' : 'vs'}</td>
-                            <td className="py-3 px-4 font-semibold text-slate-800">{m.isBye ? '—' : (m.teamB?.name || 'TBD')}</td>
+                            <td className="py-3 px-4 font-semibold text-navy">{m.isBye ? '—' : (m.teamB?.name || 'TBD')}</td>
                             <td className="py-3 px-4 text-slate-600">{m.venue}</td>
                             <td className="py-3 px-4 text-slate-600">
                               {m.adjudicators?.map(a => (
@@ -400,38 +412,88 @@ const AdjudicatorDashboard = () => {
       {/* Leaderboard Tab */}
       {activeTab === 'leaderboard' && (
         <div className="card">
-          <h3 className="text-lg font-bold text-slate-800 mb-4">Team Standings</h3>
-          {leaderboard.length === 0 ? (
-            <p className="text-slate-500 text-center py-8">No results submitted yet.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-200">
-                    <th className="text-center py-3 px-4 font-semibold text-slate-500 uppercase tracking-wider text-xs">Rank</th>
-                    <th className="text-left py-3 px-4 font-semibold text-slate-500 uppercase tracking-wider text-xs">Team</th>
-                    <th className="text-center py-3 px-4 font-semibold text-slate-500 uppercase tracking-wider text-xs">Wins</th>
-                    <th className="text-center py-3 px-4 font-semibold text-slate-500 uppercase tracking-wider text-xs">Total Score</th>
-                    <th className="text-center py-3 px-4 font-semibold text-slate-500 uppercase tracking-wider text-xs">Matches</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {leaderboard.map((row) => (
-                    <tr key={row.teamId} className={`border-b border-slate-100 hover:bg-slate-50 transition-colors ${row.rank <= 3 ? 'bg-amber-50/40' : ''}`}>
-                      <td className="py-3 px-4 text-center">
-                        <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold ${row.rank === 1 ? 'bg-yellow-400 text-white' : row.rank === 2 ? 'bg-slate-300 text-white' : row.rank === 3 ? 'bg-amber-600 text-white' : 'bg-slate-100 text-slate-500'}`}>
-                          {row.rank}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 font-semibold text-slate-800">{row.teamName}</td>
-                      <td className="py-3 px-4 text-center font-bold text-emerald-600">{row.wins}</td>
-                      <td className="py-3 px-4 text-center font-medium text-slate-700">{row.totalScore}</td>
-                      <td className="py-3 px-4 text-center text-slate-500">{row.matchesPlayed}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+            <h3 className="text-lg font-bold text-navy">Standings</h3>
+            <div className="flex bg-slate-100 p-1 rounded-md">
+              <button 
+                onClick={() => setLbTab('teams')}
+                className={`px-4 py-1.5 text-sm font-medium rounded transition-colors ${lbTab === 'teams' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              >
+                Teams
+              </button>
+              <button 
+                onClick={() => setLbTab('adjudicators')}
+                className={`px-4 py-1.5 text-sm font-medium rounded transition-colors ${lbTab === 'adjudicators' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              >
+                Adjudicators
+              </button>
             </div>
+          </div>
+
+          {lbTab === 'teams' ? (
+            leaderboard.length === 0 ? (
+              <p className="text-slate-500 text-center py-8">No results submitted yet.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-200">
+                      <th className="text-center py-3 px-4 font-semibold text-slate-500 uppercase tracking-wider text-xs">Rank</th>
+                      <th className="text-left py-3 px-4 font-semibold text-slate-500 uppercase tracking-wider text-xs">Team</th>
+                      <th className="text-center py-3 px-4 font-semibold text-slate-500 uppercase tracking-wider text-xs">Wins</th>
+                      <th className="text-center py-3 px-4 font-semibold text-slate-500 uppercase tracking-wider text-xs">Total Score</th>
+                      <th className="text-center py-3 px-4 font-semibold text-slate-500 uppercase tracking-wider text-xs">Matches</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {leaderboard.map((row) => (
+                      <tr key={row.teamId} className={`border-b border-slate-100 hover:bg-slate-50 transition-colors ${row.rank <= 3 ? 'bg-amber-50/40' : ''}`}>
+                        <td className="py-3 px-4 text-center">
+                          <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold ${row.rank === 1 ? 'bg-yellow-400 text-white' : row.rank === 2 ? 'bg-slate-300 text-white' : row.rank === 3 ? 'bg-amber-600 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                            {row.rank}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 font-semibold text-navy">{row.teamName}</td>
+                        <td className="py-3 px-4 text-center font-bold text-emerald-600">{row.wins}</td>
+                        <td className="py-3 px-4 text-center font-medium text-slate-700">{row.totalScore}</td>
+                        <td className="py-3 px-4 text-center text-slate-500">{row.matchesPlayed}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
+          ) : (
+            adjLeaderboard.length === 0 ? (
+              <p className="text-slate-500 text-center py-8">No adjudicator ratings submitted yet.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-200">
+                      <th className="text-center py-3 px-4 font-semibold text-slate-500 uppercase tracking-wider text-xs">Rank</th>
+                      <th className="text-left py-3 px-4 font-semibold text-slate-500 uppercase tracking-wider text-xs">Adjudicator</th>
+                      <th className="text-center py-3 px-4 font-semibold text-slate-500 uppercase tracking-wider text-xs">Avg Rating</th>
+                      <th className="text-center py-3 px-4 font-semibold text-slate-500 uppercase tracking-wider text-xs">Total Ratings</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {adjLeaderboard.map((row) => (
+                      <tr key={row.adjudicatorId} className={`border-b border-slate-100 hover:bg-slate-50 transition-colors ${row.rank <= 3 ? 'bg-amber-50/40' : ''}`}>
+                        <td className="py-3 px-4 text-center">
+                          <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold ${row.rank === 1 ? 'bg-yellow-400 text-white' : row.rank === 2 ? 'bg-slate-300 text-white' : row.rank === 3 ? 'bg-amber-600 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                            {row.rank}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 font-semibold text-navy">{row.adjudicatorName} {row.adjudicatorId === user._id ? '⭐' : ''}</td>
+                        <td className="py-3 px-4 text-center font-bold text-primary">{row.averageRating.toFixed(1)} / 10</td>
+                        <td className="py-3 px-4 text-center text-slate-500">{row.ratingCount}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
           )}
         </div>
       )}

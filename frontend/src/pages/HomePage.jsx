@@ -30,28 +30,28 @@ const HomePage = () => {
 
       <div className="grid md:grid-cols-3 gap-8 w-full">
         <div className="card text-left">
-          <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center mb-6">
-            <Activity className="text-blue-600 w-6 h-6" />
+          <div className="w-12 h-12 rounded-lg bg-blue/10 flex items-center justify-center mb-6">
+            <Activity className="text-blue w-6 h-6" />
           </div>
-          <h3 className="text-xl font-bold text-slate-800 mb-3">Automated Pairing</h3>
+          <h3 className="text-xl font-bold text-navy mb-3">Automated Pairing</h3>
           <p className="text-slate-500">
             Intelligent matchmaking algorithms handle power-pairing and adjudicator distribution seamlessly.
           </p>
         </div>
         <div className="card text-left">
-          <div className="w-12 h-12 rounded-lg bg-pink-100 flex items-center justify-center mb-6">
-            <Users className="text-pink-600 w-6 h-6" />
+          <div className="w-12 h-12 rounded-lg bg-teal/10 flex items-center justify-center mb-6">
+            <Users className="text-teal w-6 h-6" />
           </div>
-          <h3 className="text-xl font-bold text-slate-800 mb-3">Role-based Access</h3>
+          <h3 className="text-xl font-bold text-navy mb-3">Role-based Access</h3>
           <p className="text-slate-500">
             Dedicated dashboards for Teams, Adjudicators, and Organizing Committee (OC) members.
           </p>
         </div>
         <div className="card text-left">
-          <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center mb-6">
-            <ShieldCheck className="text-green-600 w-6 h-6" />
+          <div className="w-12 h-12 rounded-lg bg-mint/20 flex items-center justify-center mb-6">
+            <ShieldCheck className="text-mint w-6 h-6" />
           </div>
-          <h3 className="text-xl font-bold text-slate-800 mb-3">Transparent Results</h3>
+          <h3 className="text-xl font-bold text-navy mb-3">Transparent Results</h3>
           <p className="text-slate-500">
             Secure submission of ballot results, adjudicator ratings, and round-by-round point tracking.
           </p>

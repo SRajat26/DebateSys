@@ -29,7 +29,7 @@ const LoginPage = () => {
     <div className="flex justify-center items-center py-20">
       <div className="card max-w-md w-full">
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-slate-800 mb-2">Welcome back</h2>
+          <h2 className="text-3xl font-bold text-navy mb-2">Welcome back</h2>
           <p className="text-slate-500">Enter your credentials to access your account</p>
         </div>
 
@@ -86,7 +86,7 @@ const LoginPage = () => {
 
         <div className="mt-8 text-center text-sm text-slate-600">
           Don't have an account?{' '}
-          <Link to="/register" className="font-semibold text-primary hover:text-blue-700 transition-colors">
+          <Link to="/register" className="font-semibold text-primary hover:text-blue transition-colors">
             Register now
           </Link>
         </div>
